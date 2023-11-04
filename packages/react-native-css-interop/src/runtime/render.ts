@@ -12,9 +12,8 @@ import type {
   InteropFunction,
   JSXFunction,
 } from "../types";
-import { defaultCSSInterop } from "./css-interop";
 import { getNormalizeConfig } from "./native/prop-mapping";
-import { styleMetaMap } from "./native/misc";
+import { defaultInteropRef, styleMetaMap } from "./globals";
 
 export type InteropTypeCheck<T> = {
   type: ComponentType<T>;
@@ -83,9 +82,11 @@ export function createElementAndCheckCssInterop(
 export function cssInterop<T extends {}, M>(
   component: ComponentType<T> | string,
   mapping: EnableCssInteropOptions<T> & M,
-  interop: InteropFunction = defaultCSSInterop,
+  interop?: InteropFunction,
 ) {
   const config = getNormalizeConfig(mapping);
+
+  interop ??= defaultInteropRef.current;
 
   let render: any = <P extends { ___pressable?: true }>(
     { children, ___pressable, ...props }: PropsWithChildren<P>,
@@ -99,7 +100,7 @@ export function cssInterop<T extends {}, M>(
       return createElement(component, props as unknown as T, children);
     } else {
       return createElement(
-        ...interop(component, config, props as unknown as T, children),
+        ...interop!(component, config, props as unknown as T, children),
       );
     }
   };
@@ -124,7 +125,7 @@ export function cssInterop<T extends {}, M>(
   const interopComponent: InteropTypeCheck<T> = {
     type: render,
     createElementWithInterop(props, children) {
-      return createElement(...interop(component, config, props, children));
+      return createElement(...interop!(component, config, props, children));
     },
     check(props) {
       for (const [
@@ -140,12 +141,13 @@ export function cssInterop<T extends {}, M>(
         }
 
         const target: any = props[targetProp];
+        const targetMeta = styleMetaMap.get(target);
 
         if (Array.isArray(target)) {
           if (checkArray(target)) {
             return true;
           }
-        } else if (styleMetaMap.has(target)) {
+        } else if (targetMeta && !targetMeta.alreadyProcessed) {
           return true;
         }
       }

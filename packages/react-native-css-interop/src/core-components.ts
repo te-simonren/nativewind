@@ -25,6 +25,9 @@ import type {
   InteropFunction,
 } from "./types";
 import { remapProps } from "./runtime/css-interop";
+import { defaultInteropRef } from "./runtime/globals";
+
+defaultInteropRef.current = defaultCSSInterop;
 
 export function unstable_styled<P extends object, M>(
   component: ComponentType<P>,
