@@ -1655,8 +1655,7 @@ function parseUnparsed(
           options.addValueWarning(tokenOrValue.value.value);
           return;
         case "percentage":
-          options.addValueWarning(`${tokenOrValue.value.value}%`);
-          return;
+          return `${round(tokenOrValue.value.value * 100)}%`;
         case "dimension":
           return parseDimension(tokenOrValue.value, options);
         case "at-keyword":
